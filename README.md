@@ -4,9 +4,9 @@ Nishant Nayudu - nayudu2
 
 Rachit Nandwani - nandwan2
 
-# Spam Zapper
+# Spam Detector
 
-Spam Zapper is a supervised learning spam classification tool.
+Spam Detector is a supervised learning spam classification tool.
 
 # Naive Bayes
 
