@@ -94,15 +94,15 @@ threshold = 0.5
 correct = 0
 test_set_length = len(test_y)
 for i in range(test_set_length):
-	spam_probability = float(1.0)
-	ham_probability = float(1.0)
+	spam_probability = float(0.0)
+	ham_probability = float(0.0)
 	current_set = test_x[i]
 	words = nltk.word_tokenize(current_set)
 	for key in words:
 		val = classifier.get(key)
 		if val != None:
-			spam_probability *= float(val[spam] / val[2])
-			ham_probability *= float(val[ham] / val[2])
+			spam_probability += float(val[spam] / val[2])
+			ham_probability += float(val[ham] / val[2])
 
 	if (spam_probability >= ham_probability) and test_y[i] == spam:
 		correct += 1
