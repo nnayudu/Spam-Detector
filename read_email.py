@@ -2,8 +2,10 @@ import sys
 import os
 import codecs
 import email
+import math
 from random import shuffle
 from sklearn import svm
+from sklearn.feature_extraction.text import CountVectorizer
 
 ham = 0
 spam = 1
@@ -11,6 +13,7 @@ base_path = "datasets/"
 folders = [("easy_ham", ham), ("hard_ham", ham), ("spam", spam)]
 
 def parseFolder(foldername):
+	null_count = 0
 	path = base_path + foldername + "/"
 	feature_list = []
 	for filename in os.listdir(path):
@@ -18,8 +21,17 @@ def parseFolder(foldername):
 			continue
 		f = open(path+filename, 'r')
 		content = email.message_from_file(f)
-		features = (content.get_param('Return-Path'), content.get_payload())
-		feature_list.append(features)
+		sender = content['Sender']
+		payload = ""
+		if not content.is_multipart():
+			payload = content.get_payload()
+			if payload != None:
+				try:
+					features = str(payload)
+					feature_list.append(str('Nigga'))
+				except ValueError:
+					null_count += 1
+					print len(payload)
 	
 		# if content.is_multipart():
 		# 	for payload in content.get_payload():
@@ -32,10 +44,12 @@ def parseFolder(foldername):
 # Parse different datasets
 y = []
 feature_list = []
-for foldername,value in folders:
+for foldername, value in folders:
 	result = parseFolder(foldername)
-	feature_list = feature_list + result
-	y = y + ([value] * len(result))
+	feature_list.extend(result)
+	y.extend([value] * len(result))
+
+print "LENGTH: ", len(y)
 
 # Shuffle 
 n = len(y)
@@ -49,10 +63,18 @@ for i in index_shuf:
 
 # Partition
 partition = 0.5
-size_training = math.floor(partition*n)
-training_x = feature_list[0:size_training]
+size_training = int(math.floor(partition*n))
+
+vectorizer = CountVectorizer(analyzer = "word",   \
+                             tokenizer = None,    \
+                             preprocessor = None, \
+                             stop_words = None,   \
+                             max_features = 5000)
+processed_list = vectorizer.fit_transform(feature_list_shuf)
+
+training_x = processed_list[0:size_training]
 training_y = y[0:size_training]
-test_x = feature_list[size_training:n]
+test_x = processed_list[size_training:n]
 test_y = y[size_training:n]
 
 #Train classifier
