@@ -3,9 +3,8 @@ import os
 import codecs
 import email
 import math
+import nltk
 from random import shuffle
-from sklearn import svm
-from sklearn.feature_extraction.text import CountVectorizer
 
 ham = 0
 spam = 1
@@ -40,6 +39,28 @@ def parseFolder(foldername):
 		# 	feature_list.append(content.get_payload())
 	return feature_list
 
+def create_bayesian_classifier(dataset, labels):
+	classifier = {}
+	n = len(labels)
+	for i in range(n):
+		current_set = dataset[i]
+		words = nltk.word_tokenize(current_set) # Get actual words out from the payload
+		for key in words:
+			if classifier.get(key) != None:
+				classifier[key][2] += 1.0
+				if labels == spam:
+					classifier[key][spam] += 1.0
+				else:
+					classifier[key][ham] += 1.0
+			else:
+				classifier[key] = [0.0, 0.0, 1.0]
+				if labels == spam:
+					classifier[key][spam] += 1.0
+				else:
+					classifier[key][ham] += 1.0
+	return classifier
+
+
 # Parse different datasets
 y = []
 feature_list = []
@@ -61,21 +82,31 @@ for i in index_shuf:
 # Partition
 partition = 0.25
 size_training = int(math.floor(partition*n))
-
-vectorizer = CountVectorizer()
-processed_list = vectorizer.fit_transform(feature_list_shuf)
-
-training_x = processed_list[0:size_training]
+training_x = feature_list_shuf[0:size_training]
 training_y = y_shuf[0:size_training]
-test_x = processed_list[size_training:n]
+test_x = feature_list_shuf[size_training:n]
 test_y = y_shuf[size_training:n]
 
-#Train classifier
-clf = svm.SVC()
-clf.fit(training_x, training_y)
+classifier = create_bayesian_classifier(training_x, training_y)
+threshold = 0.5
 
-#Check classifier
-prediction = clf.predict(test_x)
-correct = [i for i,j in zip(prediction, test_y) if i==j]
-correct = len(correct)
-print correct*100/len(test_y)
+# Prediction
+correct = 0
+test_set_length = len(test_y)
+for i in range(test_set_length):
+	spam_probability = float(1.0)
+	ham_probability = float(1.0)
+	current_set = test_x[i]
+	words = nltk.word_tokenize(current_set)
+	for key in words:
+		val = classifier.get(key)
+		if val != None:
+			spam_probability *= float(val[spam] / val[2])
+			ham_probability *= float(val[ham] / val[2])
+
+	if (spam_probability >= ham_probability) and test_y[i] == spam:
+		correct += 1
+	if (spam_probability < ham_probability) and test_y[i] == ham:
+		correct += 1
+
+print "Prediction Rate is: ", (float(correct) / float(test_set_length)) * 100.0
