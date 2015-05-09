@@ -31,12 +31,6 @@ def parseFolder(foldername):
 				except ValueError:
 					null_count += 1
 	
-		# if content.is_multipart():
-		# 	for payload in content.get_payload():
-		#  		if payload.is_multipart():
-		# 			feature_list.append(payload.get_payload())
-		# else:
-		# 	feature_list.append(content.get_payload())
 	return feature_list
 
 def create_bayesian_classifier(dataset, labels):
